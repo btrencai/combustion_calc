@@ -11,6 +11,9 @@ jobs:
     # 指定运行环境：这里使用 GitHub 提供的最新 Windows 服务器，以确保打包出的是 .exe 文件
     runs-on: windows-latest
 
+    permissions:
+      contents: write
+
     steps:
     - name: 获取最新代码
       uses: actions/checkout@v4
