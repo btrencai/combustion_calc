@@ -1,0 +1,44 @@
+name: Build and Release
+
+# 触发条件：只有当你推送以 'v' 开头的标签（例如 v1.0.0）时，才会执行此操作
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    # 指定运行环境：这里使用 GitHub 提供的最新 Windows 服务器，以确保打包出的是 .exe 文件
+    runs-on: windows-latest
+
+    steps:
+    - name: 获取最新代码
+      uses: actions/checkout@v4
+
+    - name: 配置 Python 环境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10' # 建议与你本地开发环境版本一致，比如 '3.11' 等
+
+    - name: 安装依赖包
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        # 这里会读取你之前生成的 requirements.txt 来安装环境
+        pip install -r requirements.txt
+
+    - name: 使用 PyInstaller 打包
+      # 【重点修改区】: 把 main.py 换成你真正的代码主入口文件名
+      # -F 表示打包成单文件，-w 表示运行时不显示黑框控制台，-n 指定生成 exe 的名字
+      run: pyinstaller -F -w -n combustion_calc 3.py
+
+    - name: 创建 Release 并上传 .exe 附件
+      uses: softprops/action-gh-release@v2
+      with:
+        # 告诉 GitHub 把打包好的 exe 文件放到 Release 页面上
+        files: dist/combustion_calc.exe
+        # 自动生成更新日志（把这个版本修改的 commit 记录列出来）
+        generate_release_notes: true
+      env:
+        # 这是 GitHub 自动提供的秘钥，用来获取上传文件的权限
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
